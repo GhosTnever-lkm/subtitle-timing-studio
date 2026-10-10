@@ -28,7 +28,7 @@ function loadSubtitleText(text, name) {
   $('file-info').title = `Исходный формат: ${format.toUpperCase()}`;
   $('file-icon').textContent = format.toUpperCase();
   setDirty(false); render();
-  toast(parsed.errors.length ? `Загружено ${state.cues.length} реплик; найдены ошибки чтения` : `Загружено ${state.cues.length} реплик`);
+  toast(parsed.errors.length ? `Загружено ${pluralCues(state.cues.length)}; найдены ошибки чтения` : `Загружено ${pluralCues(state.cues.length)}`);
 }
 
 function render() { renderCues(); renderEditor(); renderPreview(); renderTimeline(); renderDiagnostics(); }
@@ -92,7 +92,7 @@ function renderDiagnostics() {
   else {
     const issues = validateCues(state.cues); const hardErrors = state.cues.reduce((n, cue) => n + ((!Number.isFinite(cue.startMs) || !Number.isFinite(cue.endMs) || cue.endMs <= cue.startMs) ? 1 : 0), 0);
     $('issue-badge').textContent = issues.length ? `${issues.length} замеч.` : 'Всё чисто'; $('issue-badge').className = `status-badge ${issues.length ? 'warn' : 'good'}`;
-    const summary = document.createElement('p'); summary.className = issues.length ? '' : 'muted'; summary.textContent = issues.length ? `Найдено ${issues.length} замечаний. Исправьте таймкоды перед экспортом.` : `${state.cues.length} реплик · тайминги согласованы · пересечений нет.`; out.append(summary);
+    const summary = document.createElement('p'); summary.className = issues.length ? '' : 'muted'; summary.textContent = issues.length ? `Найдено ${issues.length} замечаний. Исправьте таймкоды перед экспортом.` : `${pluralCues(state.cues.length)} · тайминги согласованы · пересечений нет.`; out.append(summary);
     issues.slice(0, 8).forEach((issue) => { const row = document.createElement('div'); row.className = 'issue-row'; const dot = document.createElement('span'); dot.className = `issue-dot${issue.code.startsWith('time.') ? ' error' : ''}`; dot.textContent = issue.code.startsWith('time.') ? '!' : '•'; const text = document.createElement('span'); text.textContent = `${issue.code === 'time.overlap' ? 'Пересечение таймингов' : issue.code === 'time.order' ? 'Конец должен быть позже начала' : issue.code === 'time.negative' ? 'Отрицательный таймкод' : issue.code === 'id.duplicate' ? 'Повторяется ID реплики' : issue.message}${issue.cueId ? ` · ${issue.cueId}` : ''}`; row.append(dot, text); out.append(row); });
     if (issues.length > 8) { const extra = document.createElement('p'); extra.className = 'muted'; extra.textContent = `И ещё ${issues.length - 8} замечаний`; out.append(extra); }
   }
