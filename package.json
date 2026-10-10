@@ -1,0 +1,14 @@
+{
+  "name": "subtitle-timing-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first SRT and WebVTT subtitle timing editor with video preview.",
+  "scripts": {
+    "start": "node dev-server.mjs",
+    "test": "node --test",
+    "check": "node --check app.js && node --check core.js && node --check dev-server.mjs && node --check tests/core.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

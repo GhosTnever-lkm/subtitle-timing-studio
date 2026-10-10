@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1019">
+  <meta name="description" content="Локальный редактор таймингов субтитров SRT и WebVTT с предпросмотром видео, проверкой и экспортом.">
+  <title>Subtitle Timing Studio</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Subtitle Timing Studio — начало"><span class="brand-mark">S</span><span>Subtitle <b>Timing Studio</b><small>Локальный редактор субтитров</small></span></a>
+    <div class="top-actions"><span class="privacy"><i></i> Файлы остаются на устройстве</span><button class="button subtle" id="open-subtitles">Открыть субтитры</button><button class="button primary" id="export-top">Экспортировать</button></div>
+  </header>
+  <main id="top">
+    <section class="toolbar" aria-label="Действия с файлом">
+          <div class="file-meta"><span class="file-icon" id="file-icon">SRT</span><div><strong id="file-name">Новый проект</strong><small id="file-info">Добавьте SRT или WebVTT, чтобы начать</small></div></div>
+      <div class="toolbar-actions"><button id="open-video" class="button subtle">＋ Видео</button><button id="add-cue" class="button subtle">＋ Реплика</button><label class="format-label" for="export-format">Экспорт</label><select id="export-format" aria-label="Формат экспорта"><option value="srt">SRT</option><option value="vtt">WebVTT</option></select></div>
+    </section>
+    <section class="workspace">
+      <div class="left-column">
+        <section class="panel preview-panel" aria-label="Предпросмотр видео">
+          <div class="panel-heading"><div><span class="eyebrow">ПРЕДПРОСМОТР</span><h1>Проверьте синхронизацию</h1></div><label class="switch-label"><input type="checkbox" id="preview-toggle" checked><span class="switch"></span>Субтитры</label></div>
+          <div class="video-stage" id="video-stage"><div class="stage-empty" id="stage-empty"><div class="play-symbol">▶</div><strong>Добавьте локальное видео</strong><span>или продолжайте редактировать таймкоды без него</span><button id="choose-video" class="button stage-button">Выбрать видео</button></div><video id="video" controls playsinline hidden></video><div class="caption-overlay" id="caption-overlay" aria-live="polite"></div></div>
+          <div class="transport"><button class="icon-button" id="step-back" aria-label="Назад на 5 секунд">−5</button><button class="icon-button play-button" id="play-pause" aria-label="Воспроизвести">▶</button><button class="icon-button" id="step-forward" aria-label="Вперёд на 5 секунд">+5</button><span class="clock" id="video-clock">00:00:00.000</span><span class="transport-hint">Выберите реплику, чтобы перейти к ней</span></div>
+        </section>
+        <section class="panel timeline-panel"><div class="panel-heading compact"><div><span class="eyebrow">ТАЙМЛАЙН</span><h2>Реплики <span id="cue-count" class="count">0</span></h2></div><div class="timeline-tools"><button id="set-start" class="button micro">Начало = сейчас</button><button id="set-end" class="button micro">Конец = сейчас</button></div></div><div class="timeline-ruler"><span>0:00</span><span>Длительность проекта</span><span id="duration-label">—</span></div><div class="timeline-track" id="timeline-track" aria-label="Таймлайн реплик"></div><div class="hint-line">Нажмите на блок, чтобы выбрать реплику. Перетащите его для изменения начала.</div></section>
+      </div>
+      <aside class="right-column">
+        <section class="panel cues-panel"><div class="panel-heading compact"><div><span class="eyebrow">СЦЕНАРИЙ</span><h2>Список реплик</h2></div><button class="icon-button small" id="sort-cues" aria-label="Сортировать реплики по времени" title="Сортировать по времени">↕</button></div><div class="cue-list" id="cue-list" role="list"></div><div class="empty-cues" id="empty-cues"><span class="empty-glyph">＋</span><strong>Пока нет реплик</strong><span>Откройте файл или добавьте первую строку</span><button class="button subtle" id="empty-add">Добавить реплику</button></div><div class="cue-footer"><span id="selected-label">Ничего не выбрано</span><button id="delete-cue" class="text-button danger" disabled>Удалить</button></div></section>
+        <section class="panel editor-panel"><div class="panel-heading compact"><div><span class="eyebrow">РЕДАКТОР</span><h2>Тайминг и текст</h2></div><span class="save-state" id="save-state">Готово</span></div><div id="editor-empty" class="editor-empty">Выберите реплику в списке, чтобы изменить её.</div><form id="cue-form" hidden>
+          <div class="time-grid"><label>Начало<input id="cue-start" inputmode="numeric" placeholder="00:00:00.000" autocomplete="off"><span>HH:MM:SS.mmm</span></label><label>Конец<input id="cue-end" inputmode="numeric" placeholder="00:00:02.000" autocomplete="off"><span>HH:MM:SS.mmm</span></label></div>
+          <label class="text-label" for="cue-text">Текст реплики<textarea id="cue-text" rows="5" placeholder="Введите текст субтитров…"></textarea></label><div class="editor-bottom"><span id="char-count">0 символов</span><button type="submit" class="button primary">Применить</button></div></form></section>
+        <section class="panel diagnostics-panel"><div class="panel-heading compact"><div><span class="eyebrow">КАЧЕСТВО</span><h2>Проверка файла</h2></div><span id="issue-badge" class="status-badge neutral">Нет данных</span></div><div id="diagnostics" class="diagnostics"><p class="muted">Добавьте субтитры, чтобы проверить таймкоды и пересечения.</p></div><details class="parse-details" id="parse-details" hidden><summary>Ошибки чтения файла <span id="parse-error-count"></span></summary><div id="parse-errors"></div></details></section>
+      </aside>
+    </section>
+    <footer><span>Subtitle Timing Studio <b>·</b> Работает локально в браузере</span><span><a href="https://github.com/GhosTnever-lkm/subtitle-timing-studio">GitHub</a><span class="footer-dot">•</span> Без загрузки файлов на сервер</span></footer>
+  </main>
+  <input type="file" id="subtitle-file" accept=".srt,.vtt,text/plain,text/vtt" hidden><input type="file" id="video-file" accept="video/*" hidden>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
