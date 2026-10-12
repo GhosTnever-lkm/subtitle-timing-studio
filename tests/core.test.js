@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from '../core.js';
+
+test('package, shipped version, and changelog stay synchronized', async () => {
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  const shippedVersion = (await readFile(new URL('../VERSION', import.meta.url), 'utf8')).trim();
+  const changelog = (await readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  assert.equal(pkg.version, shippedVersion);
+  assert.ok(changelog.startsWith(`# Changelog\n\n## ${pkg.version} — `));
+});
 
 test('parses SRT BOM, CRLF, multi-line cue and preserves identifier', () => {
   const src = '\uFEFF17\r\n00:00:01,250 --> 00:00:03,000\r\nFirst line\r\nSecond line\r\n';
