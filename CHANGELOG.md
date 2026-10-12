@@ -1,14 +1,19 @@
 # Changelog
 
+## 1.0.3 — 2026-10-12
+
+- Synchronize the package version with the shipped release and add a regression test to prevent metadata drift.
+
 ## 1.0.2 — 2026-10-12
 
 - Stop export for malformed or reversed cue times; mark live edits as unsaved so invalid input cannot silently disappear.
 - Keep generated download URLs alive briefly so the browser can finish starting the file download.
 
+## 1.0.1 — 2026-10-10
+
+- Correct Russian plural forms in the file status and clean-diagnostics summary.
+
 ## 1.0.0 — 2026-10-10
 
 - First public release: local SRT/WebVTT editing, browser video preview, timeline controls, overlap and timing checks, and export.
 - Add the initial Node test suite for parsing, round-trip IDs, time conversion, and overlap edge cases.
-## 1.0.1 — 2026-10-10
-
-- Correct Russian plural forms in the file status and clean-diagnostics summary.
