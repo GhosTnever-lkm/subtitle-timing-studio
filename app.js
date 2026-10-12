@@ -103,11 +103,12 @@ function renderDiagnostics() {
 function selectCue(index) { state.selected = index; render(); const cue = selectedCue(); if (cue && !video.hidden && Number.isFinite(cue.startMs)) video.currentTime = Math.max(0, cue.startMs / 1000); }
 function updateCharCount() { const n = $('cue-text').value.length; $('char-count').textContent = `${n} символ${n % 10 === 1 && n % 100 !== 11 ? '' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов'}`; }
 
-function applyEditor(event) {
+function applyEditor(event, { silent = false } = {}) {
   event?.preventDefault(); const cue = selectedCue(); if (!cue) return;
   const start = parseTime($('cue-start').value); const end = parseTime($('cue-end').value);
   if (start === null || end === null) { toast('Введите таймкод в формате HH:MM:SS.mmm'); return; }
-  cue.startMs = start; cue.endMs = end; cue.text = $('cue-text').value; setDirty(); render(); toast('Изменения применены');
+  if (end <= start) { toast('Время окончания должно быть позже начала'); return; }
+  cue.startMs = start; cue.endMs = end; cue.text = $('cue-text').value; setDirty(); render(); if (!silent) toast('Изменения применены'); return true;
 }
 
 function addCue() {
@@ -123,17 +124,17 @@ function deleteCue() { if (state.selected < 0) return; state.cues.splice(state.s
 function setCueEdge(edge) { const cue = selectedCue(); if (!cue || video.hidden) { toast('Добавьте видео, чтобы взять текущее время'); return; } const ms = Math.max(0, Math.round(video.currentTime * 1000)); cue[edge === 'start' ? 'startMs' : 'endMs'] = ms; if (cue.endMs <= cue.startMs) { if (edge === 'start') cue.endMs = ms + 1000; else cue.startMs = Math.max(0, ms - 1000); } setDirty(); render(); }
 
 function exportFile() {
-  applyEditor();
+  if (!applyEditor(null, { silent: true }) && selectedCue()) return;
   const format = $('export-format').value; const output = serializeSubtitles(state.cues, format);
   const blob = new Blob([output], { type: format === 'vtt' ? 'text/vtt;charset=utf-8' : 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const base = (state.fileName || 'subtitles').replace(/\.(srt|vtt)$/i, '') || 'subtitles'; a.download = `${base}.${format}`; a.click(); URL.revokeObjectURL(url); setDirty(false); toast(`Экспортирован файл ${base}.${format}`);
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const base = (state.fileName || 'subtitles').replace(/\.(srt|vtt)$/i, '') || 'subtitles'; a.download = `${base}.${format}`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); setDirty(false); toast(`Экспортирован файл ${base}.${format}`);
 }
 
 function attachVideo(file) { if (!file) return; if (state.videoUrl) URL.revokeObjectURL(state.videoUrl); state.videoUrl = URL.createObjectURL(file); video.src = state.videoUrl; video.hidden = false; $('stage-empty').hidden = true; video.load(); video.addEventListener('loadedmetadata', () => { $('duration-label').textContent = formatClock(video.duration * 1000).slice(3, 8); renderTimeline(); }, { once: true }); render(); toast('Видео открыто локально'); }
 
 subtitleInput.addEventListener('change', async () => { const file = subtitleInput.files?.[0]; if (!file) return; try { loadSubtitleText(await file.text(), file.name); } catch { toast('Не удалось прочитать этот файл'); } subtitleInput.value = ''; });
 videoInput.addEventListener('change', () => { attachVideo(videoInput.files?.[0]); videoInput.value = ''; });
-$('open-subtitles').addEventListener('click', openSubtitles); $('open-video').addEventListener('click', openVideo); $('choose-video').addEventListener('click', openVideo); $('add-cue').addEventListener('click', addCue); $('empty-add').addEventListener('click', addCue); $('delete-cue').addEventListener('click', deleteCue); $('cue-form').addEventListener('submit', applyEditor); $('cue-text').addEventListener('input', updateCharCount); $('cue-text').addEventListener('change', () => applyEditor()); $('export-top').addEventListener('click', exportFile);
+$('open-subtitles').addEventListener('click', openSubtitles); $('open-video').addEventListener('click', openVideo); $('choose-video').addEventListener('click', openVideo); $('add-cue').addEventListener('click', addCue); $('empty-add').addEventListener('click', addCue); $('delete-cue').addEventListener('click', deleteCue); $('cue-form').addEventListener('submit', applyEditor); $('cue-text').addEventListener('input', () => { updateCharCount(); setDirty(); }); $('cue-text').addEventListener('change', () => applyEditor()); $('cue-start').addEventListener('input', () => setDirty()); $('cue-end').addEventListener('input', () => setDirty()); $('export-top').addEventListener('click', exportFile);
 $('set-start').addEventListener('click', () => setCueEdge('start')); $('set-end').addEventListener('click', () => setCueEdge('end')); $('sort-cues').addEventListener('click', () => { state.cues.sort((a, b) => a.startMs - b.startMs); state.selected = -1; setDirty(); render(); });
 $('step-back').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.max(0, video.currentTime - 5); }); $('step-forward').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5); }); $('play-pause').addEventListener('click', () => { if (video.hidden) { openVideo(); return; } if (video.paused) video.play(); else video.pause(); });
 video.addEventListener('timeupdate', () => { $('video-clock').textContent = formatClock(video.currentTime * 1000); renderPreview(); }); video.addEventListener('play', () => { $('play-pause').textContent = 'Ⅱ'; $('play-pause').setAttribute('aria-label', 'Пауза'); }); video.addEventListener('pause', () => { $('play-pause').textContent = '▶'; $('play-pause').setAttribute('aria-label', 'Воспроизвести'); renderPreview(); }); video.addEventListener('loadedmetadata', renderTimeline); $('preview-toggle').addEventListener('change', renderPreview);

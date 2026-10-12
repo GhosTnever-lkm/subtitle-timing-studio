@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 — 2026-10-12
+
+- Stop export for malformed or reversed cue times; mark live edits as unsaved so invalid input cannot silently disappear.
+- Keep generated download URLs alive briefly so the browser can finish starting the file download.
+
 ## 1.0.0 — 2026-10-10
 
 - First public release: local SRT/WebVTT editing, browser video preview, timeline controls, overlap and timing checks, and export.
