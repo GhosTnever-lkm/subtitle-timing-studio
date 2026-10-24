@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5 — 2026-10-24
+
+- Save valid edits to the current subtitle cue before switching to another cue, without rerendering away the pending click.
+
 ## 1.0.4 — 2026-10-24
 
 - Keep the global Delete shortcut from removing a subtitle cue while editing a time, text, or other form field.
