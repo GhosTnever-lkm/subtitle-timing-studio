@@ -138,7 +138,15 @@ $('open-subtitles').addEventListener('click', openSubtitles); $('open-video').ad
 $('set-start').addEventListener('click', () => setCueEdge('start')); $('set-end').addEventListener('click', () => setCueEdge('end')); $('sort-cues').addEventListener('click', () => { state.cues.sort((a, b) => a.startMs - b.startMs); state.selected = -1; setDirty(); render(); });
 $('step-back').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.max(0, video.currentTime - 5); }); $('step-forward').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5); }); $('play-pause').addEventListener('click', () => { if (video.hidden) { openVideo(); return; } if (video.paused) video.play(); else video.pause(); });
 video.addEventListener('timeupdate', () => { $('video-clock').textContent = formatClock(video.currentTime * 1000); renderPreview(); }); video.addEventListener('play', () => { $('play-pause').textContent = 'Ⅱ'; $('play-pause').setAttribute('aria-label', 'Пауза'); }); video.addEventListener('pause', () => { $('play-pause').textContent = '▶'; $('play-pause').setAttribute('aria-label', 'Воспроизвести'); renderPreview(); }); video.addEventListener('loadedmetadata', renderTimeline); $('preview-toggle').addEventListener('change', renderPreview);
-window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } }); window.addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') { event.preventDefault(); openSubtitles(); } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); exportFile(); } if (event.key === 'Delete' && state.selected >= 0 && document.activeElement?.tagName !== 'TEXTAREA') deleteCue(); });
+window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') { event.preventDefault(); openSubtitles(); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); exportFile(); }
+  const target = event.target;
+  const editingField = target instanceof HTMLElement
+    && (target.matches('input, textarea, select') || target.isContentEditable);
+  if (event.key === 'Delete' && state.selected >= 0 && !editingField) deleteCue();
+});
 
 // A deterministic bundled sample keeps the workspace useful without a fixture upload.
 const sample = `1\n00:00:00,400 --> 00:00:02,100\nДобро пожаловать в Subtitle Timing Studio.\n\n2\n00:00:02,300 --> 00:00:04,800\nСверяйте текст с видео и настраивайте\nначало и конец каждой реплики.\n\n3\n00:00:05,000 --> 00:00:07,200\nФайлы обрабатываются только в браузере.`;
