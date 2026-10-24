@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4 — 2026-10-24
+
+- Keep the global Delete shortcut from removing a subtitle cue while editing a time, text, or other form field.
+
 ## 1.0.3 — 2026-10-12
 
 - Synchronize the package version with the shipped release and add a regression test to prevent metadata drift.
