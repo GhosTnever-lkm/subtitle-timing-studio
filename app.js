@@ -100,7 +100,10 @@ function renderDiagnostics() {
   const errors = $('parse-errors'); errors.replaceChildren(); state.parseErrors.forEach((error) => { const pre = document.createElement('pre'); pre.textContent = `Строка ${error.line}: ${error.message} [${error.code}]`; errors.append(pre); });
 }
 
-function selectCue(index) { state.selected = index; render(); const cue = selectedCue(); if (cue && !video.hidden && Number.isFinite(cue.startMs)) video.currentTime = Math.max(0, cue.startMs / 1000); }
+function selectCue(index) {
+  if (index !== state.selected && state.dirty && !applyEditor(null, { silent: true })) return;
+  state.selected = index; render(); const cue = selectedCue(); if (cue && !video.hidden && Number.isFinite(cue.startMs)) video.currentTime = Math.max(0, cue.startMs / 1000);
+}
 function updateCharCount() { const n = $('cue-text').value.length; $('char-count').textContent = `${n} символ${n % 10 === 1 && n % 100 !== 11 ? '' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов'}`; }
 
 function applyEditor(event, { silent = false } = {}) {
@@ -134,7 +137,7 @@ function attachVideo(file) { if (!file) return; if (state.videoUrl) URL.revokeOb
 
 subtitleInput.addEventListener('change', async () => { const file = subtitleInput.files?.[0]; if (!file) return; try { loadSubtitleText(await file.text(), file.name); } catch { toast('Не удалось прочитать этот файл'); } subtitleInput.value = ''; });
 videoInput.addEventListener('change', () => { attachVideo(videoInput.files?.[0]); videoInput.value = ''; });
-$('open-subtitles').addEventListener('click', openSubtitles); $('open-video').addEventListener('click', openVideo); $('choose-video').addEventListener('click', openVideo); $('add-cue').addEventListener('click', addCue); $('empty-add').addEventListener('click', addCue); $('delete-cue').addEventListener('click', deleteCue); $('cue-form').addEventListener('submit', applyEditor); $('cue-text').addEventListener('input', () => { updateCharCount(); setDirty(); }); $('cue-text').addEventListener('change', () => applyEditor()); $('cue-start').addEventListener('input', () => setDirty()); $('cue-end').addEventListener('input', () => setDirty()); $('export-top').addEventListener('click', exportFile);
+$('open-subtitles').addEventListener('click', openSubtitles); $('open-video').addEventListener('click', openVideo); $('choose-video').addEventListener('click', openVideo); $('add-cue').addEventListener('click', addCue); $('empty-add').addEventListener('click', addCue); $('delete-cue').addEventListener('click', deleteCue); $('cue-form').addEventListener('submit', applyEditor); $('cue-text').addEventListener('input', () => { updateCharCount(); setDirty(); }); $('cue-start').addEventListener('input', () => setDirty()); $('cue-end').addEventListener('input', () => setDirty()); $('export-top').addEventListener('click', exportFile);
 $('set-start').addEventListener('click', () => setCueEdge('start')); $('set-end').addEventListener('click', () => setCueEdge('end')); $('sort-cues').addEventListener('click', () => { state.cues.sort((a, b) => a.startMs - b.startMs); state.selected = -1; setDirty(); render(); });
 $('step-back').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.max(0, video.currentTime - 5); }); $('step-forward').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5); }); $('play-pause').addEventListener('click', () => { if (video.hidden) { openVideo(); return; } if (video.paused) video.play(); else video.pause(); });
 video.addEventListener('timeupdate', () => { $('video-clock').textContent = formatClock(video.currentTime * 1000); renderPreview(); }); video.addEventListener('play', () => { $('play-pause').textContent = 'Ⅱ'; $('play-pause').setAttribute('aria-label', 'Пауза'); }); video.addEventListener('pause', () => { $('play-pause').textContent = '▶'; $('play-pause').setAttribute('aria-label', 'Воспроизвести'); renderPreview(); }); video.addEventListener('loadedmetadata', renderTimeline); $('preview-toggle').addEventListener('change', renderPreview);
