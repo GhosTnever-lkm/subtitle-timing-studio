@@ -1,4 +1,4 @@
-import { formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from './core.js';
+import { activeCuesAt, formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from './core.js';
 
 const $ = (id) => document.getElementById(id);
 const state = { cues: [], selected: -1, fileName: '', parseErrors: [], videoUrl: '', dirty: false };
@@ -58,9 +58,9 @@ function renderEditor() {
 
 function renderPreview() {
   const enabled = $('preview-toggle').checked;
-  if (!enabled || video.hidden || video.paused && video.currentTime === 0) { $('caption-overlay').textContent = ''; return; }
+  if (!enabled || video.hidden) { $('caption-overlay').textContent = ''; return; }
   const now = video.currentTime * 1000;
-  const active = state.cues.filter((cue) => now >= cue.startMs && now < cue.endMs && cue.text).map((cue) => cue.text);
+  const active = activeCuesAt(state.cues, now).map((cue) => cue.text);
   $('caption-overlay').textContent = active.join('\n');
 }
 

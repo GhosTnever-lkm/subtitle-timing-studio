@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.6 — 2026-10-25
+
+- Show subtitles that start at 00:00 while the video is paused on its first frame.
+- Add a shared active-cue lookup with a regression for the first-frame and cue-end boundaries.
+
 ## 1.0.5 — 2026-10-24
 
 - Save valid edits to the current subtitle cue before switching to another cue, without rerendering away the pending click.
