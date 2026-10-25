@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.8 — 2026-10-25
+
+- Save valid cue drafts before sorting or adding another cue, preserve the selected cue when sorting, and keep invalid drafts in the editor until corrected.
+- Add regressions for cue-draft validation and selection-preserving sort behavior.
+
 ## 1.0.7 — 2026-10-25
 
 - Reject release tags that do not match the shipped package version before building release assets.

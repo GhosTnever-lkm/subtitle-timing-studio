@@ -11,7 +11,7 @@
 - Opens SubRip (`.srt`) and WebVTT (`.vtt`) captions, including multi-line cues and WebVTT cue settings.
 - Previews captions over a video selected from your device. The browser reads it locally; the project has no upload endpoint.
 - Edits cue text and millisecond-precision in/out points; sets an edge from the current video position; seeks from the cue list.
-- Saves valid edits when switching between cues; invalid timecodes keep the current cue selected until corrected.
+- Saves valid edits before switching cues, sorting, or adding another cue; invalid timecodes keep the current cue selected and block those actions until corrected.
 - Adds, removes, sorts, and drags timeline cues to shift their timing.
 - Reports invalid timing, overlap, and duplicate cue IDs before export.
 - Exports SRT or WebVTT while retaining cue identifiers and WebVTT settings where supported.

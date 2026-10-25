@@ -70,6 +70,25 @@ export function parseTime(value) {
   return null;
 }
 
+export function applyCueDraft(cue, startValue, endValue, text) {
+  if (!cue) return 'cue.missing';
+  const start = parseTime(startValue);
+  const end = parseTime(endValue);
+  if (start === null || end === null) return 'time.invalid';
+  if (end <= start) return 'time.order';
+  cue.startMs = start;
+  cue.endMs = end;
+  cue.text = typeof text === 'string' ? text : '';
+  return null;
+}
+
+export function sortCuesPreservingSelection(cues, selectedIndex) {
+  const list = Array.isArray(cues) ? cues : [];
+  const selectedCue = Number.isInteger(selectedIndex) ? list[selectedIndex] : null;
+  const sorted = [...list].sort((a, b) => a.startMs - b.startMs);
+  return { cues: sorted, selectedIndex: selectedCue ? sorted.indexOf(selectedCue) : -1 };
+}
+
 function fracToMs(frac) {
   if (!frac) return 0;
   if (frac.length === 1) return parseInt(frac, 10) * 100;

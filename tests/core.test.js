@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { activeCuesAt, formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from '../core.js';
+import { activeCuesAt, applyCueDraft, formatTime, parseTime, parseSubtitles, serializeSubtitles, sortCuesPreservingSelection, validateCues } from '../core.js';
 
 test('package, shipped version, and changelog stay synchronized', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
@@ -43,6 +43,30 @@ test('converts timestamps accurately and accepts durations over 999 hours', () =
   assert.equal(parseTime('01:02:03,004'), 3723004); assert.equal(parseTime('02:03.4'), 123400);
   assert.equal(parseTime('1234:00:00.001'), 4442400001); assert.equal(parseTime('00:61:00.000'), null);
   assert.equal(formatTime(3723004, 'vtt'), '01:02:03.004');
+});
+
+test('applies a valid editor draft before list operations', () => {
+  const cue = { id: 'intro', startMs: 0, endMs: 1000, text: 'Original' };
+  assert.equal(applyCueDraft(cue, '00:00:02.250', '00:00:04.500', 'Updated caption'), null);
+  assert.deepEqual(cue, { id: 'intro', startMs: 2250, endMs: 4500, text: 'Updated caption' });
+});
+
+test('keeps an invalid editor draft from partially changing its cue', () => {
+  const cue = { id: 'intro', startMs: 0, endMs: 1000, text: 'Original' };
+  assert.equal(applyCueDraft(cue, 'invalid', '00:00:04.500', 'Updated caption'), 'time.invalid');
+  assert.deepEqual(cue, { id: 'intro', startMs: 0, endMs: 1000, text: 'Original' });
+  assert.equal(applyCueDraft(cue, '00:00:05.000', '00:00:04.500', 'Updated caption'), 'time.order');
+  assert.deepEqual(cue, { id: 'intro', startMs: 0, endMs: 1000, text: 'Original' });
+});
+
+test('sorts cues without mutating the original array and preserves the selected cue', () => {
+  const later = { id: 'later', startMs: 2000, endMs: 3000 };
+  const earlier = { id: 'earlier', startMs: 0, endMs: 1000 };
+  const cues = [later, earlier];
+  const result = sortCuesPreservingSelection(cues, 0);
+  assert.deepEqual(result.cues, [earlier, later]);
+  assert.equal(result.selectedIndex, 1);
+  assert.deepEqual(cues, [later, earlier]);
 });
 
 test('finds overlaps missed by neighbor-only scans and does not mutate input', () => {

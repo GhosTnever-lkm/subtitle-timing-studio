@@ -1,4 +1,4 @@
-import { activeCuesAt, formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from './core.js';
+import { activeCuesAt, applyCueDraft, formatTime, parseTime, parseSubtitles, serializeSubtitles, sortCuesPreservingSelection, validateCues } from './core.js';
 
 const $ = (id) => document.getElementById(id);
 const state = { cues: [], selected: -1, fileName: '', parseErrors: [], videoUrl: '', dirty: false };
@@ -108,13 +108,20 @@ function updateCharCount() { const n = $('cue-text').value.length; $('char-count
 
 function applyEditor(event, { silent = false } = {}) {
   event?.preventDefault(); const cue = selectedCue(); if (!cue) return;
-  const start = parseTime($('cue-start').value); const end = parseTime($('cue-end').value);
-  if (start === null || end === null) { toast('Введите таймкод в формате HH:MM:SS.mmm'); return; }
-  if (end <= start) { toast('Время окончания должно быть позже начала'); return; }
-  cue.startMs = start; cue.endMs = end; cue.text = $('cue-text').value; setDirty(); render(); if (!silent) toast('Изменения применены'); return true;
+  const error = applyCueDraft(cue, $('cue-start').value, $('cue-end').value, $('cue-text').value);
+  if (error === 'time.invalid') { toast('Введите таймкод в формате HH:MM:SS.mmm'); return; }
+  if (error === 'time.order') { toast('Время окончания должно быть позже начала'); return; }
+  if (error) return;
+  setDirty(); render(); if (!silent) toast('Изменения применены'); return true;
+}
+
+function commitPendingEdit() {
+  if (!state.dirty || !selectedCue()) return true;
+  return Boolean(applyEditor(null, { silent: true }));
 }
 
 function addCue() {
+  if (!commitPendingEdit()) return;
   const before = state.selected >= 0 ? state.cues[state.selected] : null;
   const startMs = before ? before.endMs : (Number.isFinite(video.currentTime) && !video.hidden ? Math.round(video.currentTime * 1000) : 0);
   const cue = { id: String(state.cues.length + 1), startMs, endMs: startMs + 2000, text: '', sourceLine: null };
@@ -138,7 +145,7 @@ function attachVideo(file) { if (!file) return; if (state.videoUrl) URL.revokeOb
 subtitleInput.addEventListener('change', async () => { const file = subtitleInput.files?.[0]; if (!file) return; try { loadSubtitleText(await file.text(), file.name); } catch { toast('Не удалось прочитать этот файл'); } subtitleInput.value = ''; });
 videoInput.addEventListener('change', () => { attachVideo(videoInput.files?.[0]); videoInput.value = ''; });
 $('open-subtitles').addEventListener('click', openSubtitles); $('open-video').addEventListener('click', openVideo); $('choose-video').addEventListener('click', openVideo); $('add-cue').addEventListener('click', addCue); $('empty-add').addEventListener('click', addCue); $('delete-cue').addEventListener('click', deleteCue); $('cue-form').addEventListener('submit', applyEditor); $('cue-text').addEventListener('input', () => { updateCharCount(); setDirty(); }); $('cue-start').addEventListener('input', () => setDirty()); $('cue-end').addEventListener('input', () => setDirty()); $('export-top').addEventListener('click', exportFile);
-$('set-start').addEventListener('click', () => setCueEdge('start')); $('set-end').addEventListener('click', () => setCueEdge('end')); $('sort-cues').addEventListener('click', () => { state.cues.sort((a, b) => a.startMs - b.startMs); state.selected = -1; setDirty(); render(); });
+$('set-start').addEventListener('click', () => setCueEdge('start')); $('set-end').addEventListener('click', () => setCueEdge('end')); $('sort-cues').addEventListener('click', () => { if (!commitPendingEdit()) return; const sorted = sortCuesPreservingSelection(state.cues, state.selected); state.cues = sorted.cues; state.selected = sorted.selectedIndex; setDirty(); render(); });
 $('step-back').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.max(0, video.currentTime - 5); }); $('step-forward').addEventListener('click', () => { if (!video.hidden) video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5); }); $('play-pause').addEventListener('click', () => { if (video.hidden) { openVideo(); return; } if (video.paused) video.play(); else video.pause(); });
 video.addEventListener('timeupdate', () => { $('video-clock').textContent = formatClock(video.currentTime * 1000); renderPreview(); }); video.addEventListener('play', () => { $('play-pause').textContent = 'Ⅱ'; $('play-pause').setAttribute('aria-label', 'Пауза'); }); video.addEventListener('pause', () => { $('play-pause').textContent = '▶'; $('play-pause').setAttribute('aria-label', 'Воспроизвести'); renderPreview(); }); video.addEventListener('loadedmetadata', renderTimeline); $('preview-toggle').addEventListener('change', renderPreview);
 window.addEventListener('beforeunload', (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ''; } });
