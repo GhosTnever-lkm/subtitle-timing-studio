@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.7 — 2026-10-25
+
+- Reject release tags that do not match the shipped package version before building release assets.
+- Run the release packaging checks before uploading the archive.
+
 ## 1.0.6 — 2026-10-25
 
 - Show subtitles that start at 00:00 while the video is paused on its first frame.
