@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from '../core.js';
+import { activeCuesAt, formatTime, parseTime, parseSubtitles, serializeSubtitles, validateCues } from '../core.js';
 
 test('package, shipped version, and changelog stay synchronized', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
@@ -59,6 +59,13 @@ test('checks overlaps irrespective of source ordering and treats touching cues a
 test('optional WebVTT cue identifiers do not create empty-id warnings', () => {
   const parsed = parseSubtitles('WEBVTT\n\n00:00.000 --> 00:01.000\nHi', 'vtt');
   assert.deepEqual(validateCues(parsed.cues), []);
+});
+
+test('finds cues at the initial video frame and excludes the cue end boundary', () => {
+  const opening = { id: 'opening', startMs: 0, endMs: 2000, text: 'Opening caption' };
+  const later = { id: 'later', startMs: 2000, endMs: 3000, text: 'Later caption' };
+  assert.deepEqual(activeCuesAt([opening, later], 0), [opening]);
+  assert.deepEqual(activeCuesAt([opening, later], 2000), [later]);
 });
 
 test('reports duplicate ids, invalid ranges, and explicit empty ids', () => {

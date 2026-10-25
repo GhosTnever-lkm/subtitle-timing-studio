@@ -355,6 +355,12 @@ export function serializeSubtitles(cues, format) {
   return serializeSrt(cues);
 }
 
+export function activeCuesAt(cues, timeMs) {
+  if (!Array.isArray(cues) || !Number.isFinite(timeMs)) return [];
+  return cues.filter((cue) => cue && Number.isFinite(cue.startMs) && Number.isFinite(cue.endMs)
+    && timeMs >= cue.startMs && timeMs < cue.endMs && cue.text);
+}
+
 function serializeSrt(cues) {
   const out = [];
   const list = Array.isArray(cues) ? cues : [];
